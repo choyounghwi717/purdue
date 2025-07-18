@@ -1,34 +1,20 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import streamlit as st
 
-# ✅ CSV 불러오기
-FILES = [
-    "FOOD-DATA-GROUP1.csv",
-    "FOOD-DATA-GROUP2.csv",
-    "FOOD-DATA-GROUP3.csv",
-    "FOOD-DATA-GROUP4.csv",
-    "FOOD-DATA-GROUP5.csv"
-]
-dataframes = [pd.read_csv(f) for f in FILES]
-food_data = pd.concat(dataframes, ignore_index=True).drop_duplicates()
-ALL_NUTRIENTS = [col for col in food_data.columns if col.lower() not in ['id', 'food']]
 # ✅ 세션 초기화
 if 'step' not in st.session_state:
     st.session_state.step = 0
-if 'max_foods' not in st.session_state:
-    st.session_state.max_foods = 10
-if 'nutrient_types' not in st.session_state:
-    st.session_state.nutrient_types = {}
-if 'constraints' not in st.session_state:
-    st.session_state.constraints = {}
-if 'fixed_food_name' not in st.session_state:
-    st.session_state.fixed_food_name = ""
 if 'rerun_flag' not in st.session_state:
     st.session_state.rerun_flag = False
 
+# ✅ rerun은 항상 맨 위에서 검사 후 실행
+if st.session_state.rerun_flag:
+    st.session_state.rerun_flag = False
+    st.experimental_rerun()
 
-# ✅ Step 0: 음식 개수 입력
+# ✅ Step 0
 if st.session_state.step == 0:
     st.header("1️⃣ 총 음식 개수를 입력하세요")
     max_count = st.number_input("최대 음식 개수", min_value=5, max_value=30, value=10)
@@ -37,16 +23,12 @@ if st.session_state.step == 0:
         st.session_state.step = 1
         st.session_state.rerun_flag = True
 
-
-# ✅ Step 1: 고정 음식 선택
+# ✅ Step 1
 elif st.session_state.step == 1:
-    st.header("2️⃣ 이미 포함할 음식이 있다면 검색하여 선택하세요")
-    fixed_name = st.text_input("고정할 음식 이름 (예: Burrito with Cheese 등)")
-    if st.button("다음", key="next1"):
-        if fixed_name.strip() != "" and fixed_name in food_data['food'].values:
-            st.session_state.fixed_food_name = fixed_name
-        else:
-            st.session_state.fixed_food_name = ""
+    st.header("2️⃣ 고정할 음식이 있다면 입력")
+    name = st.text_input("음식 이름 입력")
+    if st.button("다음", key="go_to_2"):
+        st.session_state.fixed_food_name = name
         st.session_state.step = 2
         st.session_state.rerun_flag = True
 
