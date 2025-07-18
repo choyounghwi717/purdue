@@ -34,6 +34,7 @@ if st.session_state.step == 0:
     if st.button("다음"):
         st.session_state.max_foods = max_count
         st.session_state.step = 1
+        st.experimental_rerun()
 
 # ✅ 4. Step 1: 고정 음식 선택
 elif st.session_state.step == 1:
@@ -45,6 +46,7 @@ elif st.session_state.step == 1:
         st.session_state.fixed_food_name = ""
     if st.button("다음", key="next1"):
         st.session_state.step = 2
+        st.experimental_rerun()
 
 # ✅ 5. Step 2: 영양소 선택
 elif st.session_state.step == 2:
@@ -53,6 +55,7 @@ elif st.session_state.step == 2:
     if st.button("다음", key="next2") and selected:
         st.session_state.selected_nutrients = selected
         st.session_state.step = 3
+        st.experimental_rerun()
 
 # ✅ 6. Step 3: 영양소 제약 입력
 elif st.session_state.step == 3:
@@ -88,11 +91,13 @@ elif st.session_state.step == 3:
             'soft_targets': soft_targets
         }
         st.session_state.step = 4
+        st.experimental_rerun()
 
 # ✅ 7. Step 4: GA 실행
 elif st.session_state.step == 4:
     st.header("✅ 추천 식단 결과")
 
+    # GA 함수들
     def enforce_food_limit_with_fixed(ind, fixed_index, max_foods=10):
         if fixed_index is not None:
             ind[fixed_index] = 1
@@ -181,6 +186,7 @@ elif st.session_state.step == 4:
         best_idx = np.argmin(final_penalties)
         return population[best_idx], final_penalties[best_idx]
 
+    # 실행
     fixed_index = None
     if st.session_state.fixed_food_name and st.session_state.fixed_food_name in food_data['name'].values:
         fixed_index = food_data[food_data['name'] == st.session_state.fixed_food_name].index[0]
@@ -195,14 +201,13 @@ elif st.session_state.step == 4:
     )
 
     selected = food_data[best_ind == 1]
+    valid_columns = [col for col in st.session_state.selected_nutrients if col in selected.columns]
+
     st.subheader("📋 추천 식단")
-    st.dataframe(selected[['name'] + st.session_state.selected_nutrients])
+    st.dataframe(selected[['name'] + valid_columns])
 
     st.subheader("📊 총합 영양소")
-    st.dataframe(selected[st.session_state.selected_nutrients].sum().to_frame("합계"))
+    st.dataframe(selected[valid_columns].sum().to_frame("합계"))
 
     csv = selected.to_csv(index=False).encode('utf-8')
     st.download_button("📥 추천 식단 CSV 다운로드", csv, file_name="recommended_diet.csv", mime="text/csv")
-
-st.sidebar.write(f"🔍 현재 단계: {st.session_state.step}")
-
