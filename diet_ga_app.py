@@ -198,11 +198,18 @@ elif st.session_state.step == 4:
 
     selected = food_data[best_ind == 1]
 
+    # 추천 식단 표시
     st.subheader("📋 추천 식단")
-    if 'name' in selected.columns:
+        if 'name' in selected.columns:
         st.dataframe(selected[['name']])
     else:
         st.warning("❌ 이름 정보가 없습니다.")
+
+    # 총합 영양소 표시
+    numeric_cols = selected.select_dtypes(include=[np.number]).columns
+    st.subheader("📊 총합 영양소")
+    st.dataframe(selected[numeric_cols].sum().to_frame("합계"))
+
 
     st.subheader("📊 총합 영양소")
     summary_cols = [col for col in ALL_NUTRIENTS if col in selected.columns]
