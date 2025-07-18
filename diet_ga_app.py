@@ -1,6 +1,18 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+# 안전한 세션 상태 초기화 (최상단에 위치)
+defaults = {
+    "step": 0,
+    "max_foods": 10,
+    "fixed_food_name": "",
+    "no_fixed_food": False,
+    "nutrient_types": {},
+    "constraints": {},
+}
+for k, v in defaults.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
 
 # ✅ 데이터 로드
 FILES = [
