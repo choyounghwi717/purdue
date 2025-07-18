@@ -202,7 +202,7 @@ elif st.session_state.step == 4:
     if 'name' in selected.columns:
         st.dataframe(selected[['name']])
     else:
-        st.write("❌ 이름 정보가 없습니다.")
+        st.warning("❌ 이름 정보가 없습니다.")
 
     st.subheader("📊 총합 영양소")
     summary_cols = [col for col in ALL_NUTRIENTS if col in selected.columns]
