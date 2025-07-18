@@ -34,7 +34,6 @@ if st.session_state.step == 0:
     if st.button("다음"):
         st.session_state.max_foods = max_count
         st.session_state.step = 1
-    
 
 # ✅ 4. Step 1: 고정 음식 선택
 elif st.session_state.step == 1:
@@ -46,7 +45,6 @@ elif st.session_state.step == 1:
         st.session_state.fixed_food_name = ""
     if st.button("다음", key="next1"):
         st.session_state.step = 2
-        
 
 # ✅ 5. Step 2: 영양소 선택
 elif st.session_state.step == 2:
@@ -55,7 +53,6 @@ elif st.session_state.step == 2:
     if st.button("다음", key="next2") and selected:
         st.session_state.selected_nutrients = selected
         st.session_state.step = 3
-        
 
 # ✅ 6. Step 3: 영양소 제약 입력
 elif st.session_state.step == 3:
@@ -91,7 +88,6 @@ elif st.session_state.step == 3:
             'soft_targets': soft_targets
         }
         st.session_state.step = 4
-       
 
 # ✅ 7. Step 4: GA 실행
 elif st.session_state.step == 4:
@@ -204,7 +200,9 @@ elif st.session_state.step == 4:
     valid_columns = [col for col in st.session_state.selected_nutrients if col in selected.columns]
 
     st.subheader("📋 추천 식단")
-    st.dataframe(selected[['name'] + valid_columns])
+    display_cols = ['name'] if 'name' in selected.columns else []
+    display_cols += valid_columns
+    st.dataframe(selected[display_cols])
 
     st.subheader("📊 총합 영양소")
     st.dataframe(selected[valid_columns].sum().to_frame("합계"))
