@@ -15,7 +15,6 @@ dataframes = [pd.read_csv(f) for f in FILES]
 food_data = pd.concat(dataframes, ignore_index=True).drop_duplicates()
 ALL_NUTRIENTS = [col for col in food_data.columns if col.lower() not in ['id', 'name', 'food']]
 
-
 # ✅ 2. 세션 초기화
 if 'step' not in st.session_state:
     st.session_state.step = 0
@@ -28,15 +27,13 @@ if 'constraints' not in st.session_state:
 if 'fixed_food_name' not in st.session_state:
     st.session_state.fixed_food_name = ""
 
-
 # ✅ 3. Step 0: 음식 개수 입력
 if st.session_state.step == 0:
-    ...
+    st.header("1️⃣ 총 음식 개수를 입력하세요")
+    max_count = st.number_input("최대 음식 개수", min_value=5, max_value=30, value=10)
     if st.button("다음"):
         st.session_state.max_foods = max_count
         st.session_state.step = 1
-        st.rerun()  # ✅ 최신 방식으로 안전하게 rerun
-
 
 # ✅ 4. Step 1: 고정 음식 선택
 elif st.session_state.step == 1:
@@ -48,7 +45,6 @@ elif st.session_state.step == 1:
         st.session_state.fixed_food_name = ""
     if st.button("다음", key="next1"):
         st.session_state.step = 2
-        st.experimental_rerun()
 
 # ✅ 5. Step 2: 영양소 선택
 elif st.session_state.step == 2:
@@ -57,7 +53,6 @@ elif st.session_state.step == 2:
     if st.button("다음", key="next2") and selected:
         st.session_state.selected_nutrients = selected
         st.session_state.step = 3
-        st.experimental_rerun()
 
 # ✅ 6. Step 3: 영양소 제약 입력
 elif st.session_state.step == 3:
@@ -93,14 +88,11 @@ elif st.session_state.step == 3:
             'soft_targets': soft_targets
         }
         st.session_state.step = 4
-        st.experimental_rerun()
-
 
 # ✅ 7. Step 4: GA 실행
 elif st.session_state.step == 4:
     st.header("✅ 추천 식단 결과")
 
-    # GA 함수들
     def enforce_food_limit_with_fixed(ind, fixed_index, max_foods=10):
         if fixed_index is not None:
             ind[fixed_index] = 1
@@ -189,7 +181,6 @@ elif st.session_state.step == 4:
         best_idx = np.argmin(final_penalties)
         return population[best_idx], final_penalties[best_idx]
 
-    # 실행
     fixed_index = None
     if st.session_state.fixed_food_name and st.session_state.fixed_food_name in food_data['name'].values:
         fixed_index = food_data[food_data['name'] == st.session_state.fixed_food_name].index[0]
