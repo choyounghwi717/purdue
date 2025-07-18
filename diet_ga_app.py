@@ -34,7 +34,7 @@ if st.session_state.step == 0:
     if st.button("다음"):
         st.session_state.max_foods = max_count
         st.session_state.step = 1
-        st.experimental_rerun()
+    
 
 # ✅ 4. Step 1: 고정 음식 선택
 elif st.session_state.step == 1:
