@@ -203,3 +203,6 @@ elif st.session_state.step == 4:
 
     csv = selected.to_csv(index=False).encode('utf-8')
     st.download_button("📥 추천 식단 CSV 다운로드", csv, file_name="recommended_diet.csv", mime="text/csv")
+
+st.sidebar.write(f"🔍 현재 단계: {st.session_state.step}")
+
