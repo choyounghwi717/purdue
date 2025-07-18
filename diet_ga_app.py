@@ -46,7 +46,7 @@ elif st.session_state.step == 1:
         st.session_state.fixed_food_name = ""
     if st.button("다음", key="next1"):
         st.session_state.step = 2
-        st.experimental_rerun()
+        
 
 # ✅ 5. Step 2: 영양소 선택
 elif st.session_state.step == 2:
@@ -55,7 +55,7 @@ elif st.session_state.step == 2:
     if st.button("다음", key="next2") and selected:
         st.session_state.selected_nutrients = selected
         st.session_state.step = 3
-        st.experimental_rerun()
+        
 
 # ✅ 6. Step 3: 영양소 제약 입력
 elif st.session_state.step == 3:
@@ -91,7 +91,7 @@ elif st.session_state.step == 3:
             'soft_targets': soft_targets
         }
         st.session_state.step = 4
-        st.experimental_rerun()
+       
 
 # ✅ 7. Step 4: GA 실행
 elif st.session_state.step == 4:
