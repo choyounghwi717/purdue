@@ -197,15 +197,16 @@ elif st.session_state.step == 4:
     )
 
     selected = food_data[best_ind == 1]
-    valid_columns = [col for col in st.session_state.selected_nutrients if col in selected.columns]
 
     st.subheader("📋 추천 식단")
-    display_cols = ['name'] if 'name' in selected.columns else []
-    display_cols += valid_columns
-    st.dataframe(selected[display_cols])
+    if 'name' in selected.columns:
+        st.dataframe(selected[['name']])
+    else:
+        st.write("❌ 이름 정보가 없습니다.")
 
     st.subheader("📊 총합 영양소")
-    st.dataframe(selected[valid_columns].sum().to_frame("합계"))
+    summary_cols = [col for col in ALL_NUTRIENTS if col in selected.columns]
+    st.dataframe(selected[summary_cols].sum().to_frame("합계"))
 
     csv = selected.to_csv(index=False).encode('utf-8')
     st.download_button("📥 추천 식단 CSV 다운로드", csv, file_name="recommended_diet.csv", mime="text/csv")
