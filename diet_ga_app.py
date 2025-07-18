@@ -31,12 +31,12 @@ if 'fixed_food_name' not in st.session_state:
 
 # ✅ 3. Step 0: 음식 개수 입력
 if st.session_state.step == 0:
-    st.header("1️⃣ 총 음식 개수를 입력하세요")
-    max_count = st.number_input("최대 음식 개수", min_value=5, max_value=30, value=10)
+    ...
     if st.button("다음"):
         st.session_state.max_foods = max_count
         st.session_state.step = 1
-        st.experimental_rerun()
+        st.rerun()  # ✅ 최신 방식으로 안전하게 rerun
+
 
 # ✅ 4. Step 1: 고정 음식 선택
 elif st.session_state.step == 1:
