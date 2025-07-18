@@ -200,7 +200,7 @@ elif st.session_state.step == 4:
 
     # 추천 식단 표시
     st.subheader("📋 추천 식단")
-        if 'name' in selected.columns:
+    if 'name' in selected.columns:
         st.dataframe(selected[['name']])
     else:
         st.warning("❌ 이름 정보가 없습니다.")
