@@ -1,20 +1,39 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import streamlit as st
 
-# ✅ 세션 초기화
+# ✅ 1. CSV 불러오기
+FILES = [
+    "FOOD-DATA-GROUP1.csv",
+    "FOOD-DATA-GROUP2.csv",
+    "FOOD-DATA-GROUP3.csv",
+    "FOOD-DATA-GROUP4.csv",
+    "FOOD-DATA-GROUP5.csv"
+]
+dataframes = [pd.read_csv(f) for f in FILES]
+food_data = pd.concat(dataframes, ignore_index=True).drop_duplicates()
+ALL_NUTRIENTS = [col for col in food_data.columns if col.lower() not in ['id', 'food']]
+
+# ✅ 2. 세션 초기화
 if 'step' not in st.session_state:
     st.session_state.step = 0
+if 'max_foods' not in st.session_state:
+    st.session_state.max_foods = 10
+if 'nutrient_types' not in st.session_state:
+    st.session_state.nutrient_types = {}
+if 'constraints' not in st.session_state:
+    st.session_state.constraints = {}
+if 'fixed_food_name' not in st.session_state:
+    st.session_state.fixed_food_name = ""
 if 'rerun_flag' not in st.session_state:
     st.session_state.rerun_flag = False
 
-# ✅ rerun은 항상 맨 위에서 검사 후 실행
+# ✅ rerun 제어
 if st.session_state.rerun_flag:
     st.session_state.rerun_flag = False
     st.experimental_rerun()
 
-# ✅ Step 0
+# ✅ Step 0: 음식 개수 입력
 if st.session_state.step == 0:
     st.header("1️⃣ 총 음식 개수를 입력하세요")
     max_count = st.number_input("최대 음식 개수", min_value=5, max_value=30, value=10)
@@ -23,23 +42,19 @@ if st.session_state.step == 0:
         st.session_state.step = 1
         st.session_state.rerun_flag = True
 
-# ✅ Step 1
+# ✅ Step 1: 고정 음식 선택
 elif st.session_state.step == 1:
-    st.header("2️⃣ 고정할 음식이 있다면 입력")
-    name = st.text_input("음식 이름 입력")
-    if st.button("다음", key="go_to_2"):
-        st.session_state.fixed_food_name = name
+    st.header("2️⃣ 이미 포함할 음식이 있다면 검색하여 선택하세요")
+    fixed_name = st.text_input("고정할 음식 이름 (예: Burrito with Cheese 등)")
+    if st.button("다음"):
+        if fixed_name.strip() != "" and fixed_name in food_data['food'].values:
+            st.session_state.fixed_food_name = fixed_name
+        else:
+            st.session_state.fixed_food_name = ""
         st.session_state.step = 2
         st.session_state.rerun_flag = True
 
-
-# ✅ rerun 처리 (가장 아래 공통 위치)
-if st.session_state.rerun_flag:
-    st.session_state.rerun_flag = False
-    st.experimental_rerun()
-
-
-# ✅ Step 2: 영양소와 제약 유형 선택 (하나의 유형만 허용)
+# ✅ Step 2: 영양소 선택 + 제약 유형 지정
 elif st.session_state.step == 2:
     st.header("3️⃣ 고려할 영양소와 제약 유형 선택")
     nutrient_types = {}
@@ -50,15 +65,15 @@ elif st.session_state.step == 2:
         with col2:
             if use:
                 ctype = st.selectbox(
-                    f"{nutrient}의 제약 유형", ["범위", "상한", "권장"], key=f"type_{nutrient}"
+                    f"{nutrient} 제약 유형", ["범위", "상한", "권장"], key=f"type_{nutrient}"
                 )
                 nutrient_types[nutrient] = ctype
-    if st.button("다음", key="next2"):
+    if st.button("다음"):
         st.session_state.nutrient_types = nutrient_types
         st.session_state.step = 3
-        st.experimental_rerun()
+        st.session_state.rerun_flag = True
 
-# ✅ Step 3: 제약 값 입력
+# ✅ Step 3: 제약 조건 값 입력
 elif st.session_state.step == 3:
     st.header("4️⃣ 제약 조건 값 입력")
     required_ranges = {}
@@ -68,8 +83,9 @@ elif st.session_state.step == 3:
     for nutrient, ctype in st.session_state.nutrient_types.items():
         if ctype == "범위":
             low = st.number_input(f"{nutrient} 최소값", key=f"min_{nutrient}", value=0.0)
-            high = st.number_input(f"{nutrient} 최대값", key=f"max_{nutrient}", value=0.0)
-            required_ranges[nutrient] = (low, None if high == 0 else high)
+            high = st.number_input(f"{nutrient} 최대값 (0이면 무제한)", key=f"max_{nutrient}", value=0.0)
+            high = None if high == 0 else high
+            required_ranges[nutrient] = (low, high)
         elif ctype == "상한":
             limit = st.number_input(f"{nutrient} 상한", key=f"upper_{nutrient}", value=0.0)
             if limit > 0:
@@ -86,7 +102,7 @@ elif st.session_state.step == 3:
             'soft_targets': soft_targets
         }
         st.session_state.step = 4
-        st.experimental_rerun()
+        st.session_state.rerun_flag = True
 
 # ✅ Step 4: 결과 출력
 elif st.session_state.step == 4:
@@ -188,14 +204,11 @@ elif st.session_state.step == 4:
     selected = food_data[best_ind == 1]
 
     st.subheader("📋 추천 식단")
-    if 'food' in selected.columns:
-        st.dataframe(selected[['food']])
-    else:
-        st.error("❌ 이름 정보가 없습니다.")
+    st.dataframe(selected[['food']] if 'food' in selected.columns else selected)
 
     st.subheader("📊 총합 영양소")
-    nutrient_sums = selected.drop(columns=['id', 'food'], errors='ignore').sum().to_frame("합계")
-    st.dataframe(nutrient_sums)
+    total_nutrients = selected.drop(columns=['id', 'food'], errors='ignore').sum().to_frame("합계")
+    st.dataframe(total_nutrients)
 
     csv = selected.to_csv(index=False).encode('utf-8')
     st.download_button("📥 추천 식단 CSV 다운로드", csv, file_name="recommended_diet.csv", mime="text/csv")
