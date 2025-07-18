@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-# ✅ 1. CSV 불러오기 (GitHub에 업로드된 상태여야 함)
+# ✅ 1. CSV 불러오기
 FILES = [
     "FOOD-DATA-GROUP1.csv",
     "FOOD-DATA-GROUP2.csv",
@@ -13,7 +13,7 @@ FILES = [
 
 dataframes = [pd.read_csv(f) for f in FILES]
 food_data = pd.concat(dataframes, ignore_index=True).drop_duplicates()
-ALL_NUTRIENTS = [col for col in food_data.columns if col.lower() not in ['id', 'name', 'food']]
+ALL_NUTRIENTS = [col for col in food_data.columns if col.lower() not in ['id', 'food']]
 
 # ✅ 2. 세션 초기화
 if 'step' not in st.session_state:
@@ -39,7 +39,7 @@ if st.session_state.step == 0:
 elif st.session_state.step == 1:
     st.header("2️⃣ 이미 포함할 음식이 있다면 검색하여 선택하세요")
     fixed_name = st.text_input("고정할 음식 이름 (예: Burrito with Cheese 등)")
-    if fixed_name.strip() != "" and fixed_name in food_data['name'].values:
+    if fixed_name.strip() != "" and fixed_name in food_data['food'].values:
         st.session_state.fixed_food_name = fixed_name
     else:
         st.session_state.fixed_food_name = ""
@@ -93,7 +93,6 @@ elif st.session_state.step == 3:
 elif st.session_state.step == 4:
     st.header("✅ 추천 식단 결과")
 
-    # GA 함수들
     def enforce_food_limit_with_fixed(ind, fixed_index, max_foods=10):
         if fixed_index is not None:
             ind[fixed_index] = 1
@@ -164,8 +163,6 @@ elif st.session_state.step == 4:
     def run_ga(data, constraints, fixed_index=None, pop_size=100, generations=50, max_foods=10):
         num_features = data.shape[0]
         population = initialize_population(pop_size, num_features, fixed_index, max_foods)
-        best_penalty = float('inf')
-
         for gen in range(generations):
             penalties = [compute_penalty(ind, data, constraints, max_foods) for ind in population]
             new_population = []
@@ -182,10 +179,9 @@ elif st.session_state.step == 4:
         best_idx = np.argmin(final_penalties)
         return population[best_idx], final_penalties[best_idx]
 
-    # 실행
     fixed_index = None
-    if st.session_state.fixed_food_name and st.session_state.fixed_food_name in food_data['name'].values:
-        fixed_index = food_data[food_data['name'] == st.session_state.fixed_food_name].index[0]
+    if st.session_state.fixed_food_name and st.session_state.fixed_food_name in food_data['food'].values:
+        fixed_index = food_data[food_data['food'] == st.session_state.fixed_food_name].index[0]
 
     best_ind, best_penalty = run_ga(
         food_data,
@@ -197,23 +193,18 @@ elif st.session_state.step == 4:
     )
 
     selected = food_data[best_ind == 1]
+    valid_columns = [col for col in st.session_state.selected_nutrients if col in selected.columns]
 
-    # 추천 식단 표시
     st.subheader("📋 추천 식단")
-    if 'name' in selected.columns:
-        st.dataframe(selected[['name']])
+    if 'food' in selected.columns:
+        st.dataframe(selected[['food']])
     else:
         st.warning("❌ 이름 정보가 없습니다.")
 
-    # 총합 영양소 표시
+    st.subheader("📊 총합 영양소")
     numeric_cols = selected.select_dtypes(include=[np.number]).columns
-    st.subheader("📊 총합 영양소")
-    st.dataframe(selected[numeric_cols].sum().to_frame("합계"))
-
-
-    st.subheader("📊 총합 영양소")
-    summary_cols = [col for col in ALL_NUTRIENTS if col in selected.columns]
-    st.dataframe(selected[summary_cols].sum().to_frame("합계"))
+    nutrient_cols = [col for col in numeric_cols if not col.lower().startswith("unnamed")]
+    st.dataframe(selected[nutrient_cols].sum().to_frame("합계"))
 
     csv = selected.to_csv(index=False).encode('utf-8')
     st.download_button("📥 추천 식단 CSV 다운로드", csv, file_name="recommended_diet.csv", mime="text/csv")
